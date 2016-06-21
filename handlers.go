@@ -32,6 +32,7 @@ func createLog(w http.ResponseWriter, r *http.Request) {
 		respond(w, r, http.StatusBadRequest, err)
 		return
 	}
+	defer stmt.Close()
 
 	_, err = stmt.Exec(log.Firstname, log.Lastname, log.Date, log.Type)
 	if err != nil {
@@ -56,6 +57,7 @@ func updateLog(w http.ResponseWriter, r *http.Request) {
 		respond(w, r, http.StatusBadRequest, err)
 		return
 	}
+	defer stmt.Close()
 
 	_, err = stmt.Exec(log.Firstname, log.Lastname, log.Date, log.Type, log_id)
 	if err != nil {
@@ -74,6 +76,7 @@ func deleteLog(w http.ResponseWriter, r *http.Request) {
 		respond(w, r, http.StatusBadRequest, err)
 		return
 	}
+	defer stmt.Close()
 
 	_, err = stmt.Exec(log_id)
 	if err != nil {
@@ -82,4 +85,33 @@ func deleteLog(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respond(w, r, http.StatusOK, nil)
+}
+
+// Collections
+func readLogs(w http.ResponseWriter, r *http.Request) {
+	db := context.Get(r, "DB").(*sql.DB)
+	var logs []*Log
+
+	rows, err := db.Query("SELECT `firstname`, `lastname`, `date`, `type` FROM `logs` LIMIT 25")
+	if err != nil {
+		respond(w, r, http.StatusBadRequest, err)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		log := new(Log)
+		if err := rows.Scan(&log.Firstname, &log.Lastname, &log.Date, &log.Type); err != nil {
+			respond(w, r, http.StatusBadRequest, err)
+			return
+		}
+		logs = append(logs, log)
+	}
+
+	if err := rows.Err(); err != nil {
+		respond(w, r, http.StatusBadRequest, err)
+		return
+	}
+
+	respond(w, r, http.StatusOK, &logs)
 }

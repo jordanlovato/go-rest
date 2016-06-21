@@ -13,5 +13,7 @@ func main() {
 	r.Patch("/log/{log_id}", WithDB(http.HandlerFunc(updateLog)))
 	r.Delete("/log/{log_id}", WithDB(http.HandlerFunc(deleteLog)))
 
+	r.Get("/log", WithDB(http.HandlerFunc(readLogs)))
+
 	http.ListenAndServe(":9080", context.ClearHandler(r))
 }
